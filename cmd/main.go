@@ -327,6 +327,15 @@ func main() {
 		log.Println("Done! in path " + c.Request.URL.Path)
 	})
 
+	r.GET("/:name/:id", func(c *gin.Context) {
+		var person Person
+		if err := c.ShouldBindUri(&person); err != nil {
+			c.JSON(400, gin.H{"msg": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"name": person.Name, "uuid": person.ID})
+	})
+
 	// 传统启动服务器
 	// r.RunTLS(":443", "./cert/server.pem", "./cert/server.key")
 
@@ -393,8 +402,10 @@ type LoginForm struct {
 }
 
 type Person struct {
-	Name    string `form:"name"`
-	Address string `form:"address"`
+	ID       string    `form:"id" uri:"id" binding:"required,uuid"`
+	Name     string    `form:"name" uri:"name" binding:"required"`
+	Address  string    `form:"address" uri:"address"`
+	Birthday time.Time `form:"birthday" time_format:"2006-01-02" time_utc:"1"`
 }
 
 var secrets = gin.H{
