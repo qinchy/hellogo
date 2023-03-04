@@ -38,7 +38,7 @@ func init() {
 func loggerToFile() gin.HandlerFunc {
 
 	//写入文件
-	src, err := os.OpenFile("./gin.log", os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	src, err := os.OpenFile("./gin.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModeAppend)
 	if err != nil {
 		fmt.Println("err", err)
 	}
@@ -55,10 +55,10 @@ func loggerToFile() gin.HandlerFunc {
 	// 设置 rotatelogs
 	logWriter, err := rotatelogs.New(
 		// 分割后的文件名称
-		src.Name()+".%Y%m%d.log",
+		(*src).Name()+".%Y%m%d.log",
 
 		// 生成软链，指向最新日志文件
-		rotatelogs.WithLinkName(src.Name()),
+		rotatelogs.WithLinkName((*src).Name()),
 
 		// 设置最大保存时间(7天)
 		rotatelogs.WithMaxAge(7*24*time.Hour),
