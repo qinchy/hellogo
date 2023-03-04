@@ -165,9 +165,10 @@ func BindForm(c *gin.Context) {
 		log.Println(person.Address)
 		log.Println(person.Birthday)
 		c.String(200, "Success")
-	} else {
-		c.String(400, "Error")
+		return
 	}
+
+	c.String(400, "Error")
 }
 
 // LoginJson json绑定的结构体

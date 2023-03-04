@@ -31,7 +31,7 @@ func Handler() {
 
 	globalvar.Route.POST("/loginform", LoginForm)
 
-	// curl -k -X POST --form "name=qinchy" --form "address=hangzhou" --form "birthday=2013-04-27" --form "id=987fbc97-4bed-5078-9f07-9141ba07c9f3"  "https://localhost/bindForm"
+	// curl -k -X POST --form "name=qinchy" --form "address=hangzhou" --form "birthday=2013-04-27" --form "id=987fbc97-4bed-5078-9f07-9141ba07c9f3"  "https://localhost/bindform"
 	globalvar.Route.POST("/bindform", BindForm)
 
 	// curl -k "https://localhost/getb?field_a=hello&field_b=world"

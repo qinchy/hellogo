@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/gin-gonic/gin v1.9.0
 	google.golang.org/protobuf v1.28.1
+	github.com/sirupsen/logrus 1.4.2
 )
 
 require (

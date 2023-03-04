@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"io"
+	"log"
 	"os"
 )
 
@@ -19,10 +20,18 @@ var (
 
 // init 定制化gin的参数可以放到这里
 func init() {
+	log.Print("这里是demo日志")
 	//  gin相关
+	gin.DisableConsoleColor() // 禁止控制台日志颜色
+
+	// 控制日志输出到文件
 	f, _ := os.OpenFile("gin.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0766)
 	// 改写日志到控制台和文件
 	gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
+
+	gin.DebugPrintRouteFunc = func(httpMethod, absolutePath, handlerName string, nuHandlers int) {
+		log.Printf("endpoint %v %v %v %v\n", httpMethod, absolutePath, handlerName, nuHandlers)
+	}
 
 	// 返回什么格式,日志格式就是什么样子
 	var formatter = func(param gin.LogFormatterParams) string {
@@ -40,5 +49,8 @@ func init() {
 	}
 	gin.LoggerWithFormatter(formatter)
 
+	gin.SetMode(gin.ReleaseMode)
+
 	Route = gin.Default()
+
 }
