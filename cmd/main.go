@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	myHandler "github.com/qinchy/hellogo/handler"
 	"github.com/qinchy/hellogo/pkg/proto"
 	"io"
 	"log"
@@ -126,6 +127,29 @@ func main() {
 		}
 	})
 
+	// curl -k -X POST --form "name=qinchy" --form "address=hangzhou" --form "birthday=2013-04-27" --form "id=987fbc97-4bed-5078-9f07-9141ba07c9f3"  "https://localhost/bindForm"
+	r.POST("/bindForm", func(c *gin.Context) {
+		var person Person
+		// 如果是 `GET` 请求，只使用 `Form` 绑定引擎（`query`）。
+		// 如果是 `POST` 请求，首先检查 `content-type` 是否为 `JSON` 或 `XML`，然后再使用 `Form`（`form-data`）。
+		// 查看更多：https://github.com/gin-gonic/gin/blob/master/binding/binding.go#L88
+		if c.ShouldBind(&person) == nil {
+			log.Println(person.Name)
+			log.Println(person.Address)
+			log.Println(person.Birthday)
+			c.String(200, "Success")
+		} else {
+			c.String(400, "Error")
+		}
+	})
+
+	// curl -k "https://localhost/getb?field_a=hello&field_b=world"
+	r.GET("/getb", myHandler.GetDataB)
+	// curl -k "https://localhost/getb?field_a=hello&field_c=world"
+	r.GET("/getc", myHandler.GetDataC)
+	// curl -k "https://localhost/getb?field_x=hello&field_d=world"
+	r.GET("/getd", myHandler.GetDataD)
+
 	// 绑定 JSON ({"user": "user", "password": "password"})
 	r.POST("/loginJSON", func(c *gin.Context) {
 		var json LoginForm
@@ -225,6 +249,10 @@ func main() {
 		names := c.PostFormMap("names")
 
 		log.Printf("ids: %v; names: %v", ids, names)
+		c.JSON(200, gin.H{
+			"ids":  ids,
+			"name": names,
+		})
 	})
 
 	// 提供字面字符
