@@ -4,20 +4,21 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/qinchy/hellogo/gin/globalvar"
+	"github.com/qinchy/hellogo/gin/proto"
 	"github.com/qinchy/hellogo/gin/types"
-	"github.com/qinchy/hellogo/pkg/proto"
 	"log"
 	"net/http"
 	"time"
 )
 
+// Ping 访问/ping的处理器
 func Ping(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "pong",
 	})
 }
 
-// StartPage handler
+// StartPage 从Query中获取数据并组装到结构体的处理器
 func StartPage(c *gin.Context) {
 	var person types.Person
 	if c.ShouldBindQuery(&person) == nil {
@@ -28,7 +29,7 @@ func StartPage(c *gin.Context) {
 	c.String(200, "Success")
 }
 
-// Getting handler
+// Getting 基础认证通过后获取数据的处理器
 func Getting(c *gin.Context) {
 	// 获取用户，它是由 BasicAuth 中间件设置的
 	user := c.MustGet(gin.AuthUserKey).(string)
@@ -39,6 +40,7 @@ func Getting(c *gin.Context) {
 	}
 }
 
+// SomeJson 返回JSON的处理器
 func SomeJson(c *gin.Context) {
 	data := map[string]interface{}{
 		"lang": "GO语言",
@@ -49,6 +51,7 @@ func SomeJson(c *gin.Context) {
 	c.AsciiJSON(http.StatusOK, data)
 }
 
+// MoreJson 返回结构体的JSON的处理器
 func MoreJson(c *gin.Context) {
 	// 你也可以使用一个结构体
 	var msg struct {
@@ -64,14 +67,17 @@ func MoreJson(c *gin.Context) {
 	c.JSON(http.StatusOK, msg)
 }
 
+// SomeXml 返回XML的处理器
 func SomeXml(c *gin.Context) {
 	c.XML(http.StatusOK, gin.H{"message": "hey", "status": http.StatusOK})
 }
 
+// SomeYaml 返回yaml的处理器
 func SomeYaml(c *gin.Context) {
 	c.YAML(http.StatusOK, gin.H{"message": "hey", "status": http.StatusOK})
 }
 
+// SomeProtoBuf 返回ProtoBuf的处理器
 func SomeProtoBuf(c *gin.Context) {
 	reps := []int64{int64(1), int64(2)}
 	label := "test"
@@ -85,24 +91,28 @@ func SomeProtoBuf(c *gin.Context) {
 	c.ProtoBuf(http.StatusOK, data)
 }
 
+// Index 加载根目录前端模板
 func Index(c *gin.Context) {
 	c.HTML(http.StatusOK, "index.tmpl", gin.H{
 		"title": "Main website",
 	})
 }
 
+// PostIndex 加载post目录前端模板
 func PostIndex(c *gin.Context) {
 	c.HTML(http.StatusOK, "posts/index.tmpl", gin.H{
 		"title": "Posts",
 	})
 }
 
+// UsersIndex 加载users目录前端模板
 func UsersIndex(c *gin.Context) {
 	c.HTML(http.StatusOK, "users/index.tmpl", gin.H{
 		"title": "Users",
 	})
 }
 
+// JsonP 返回JSONP数据
 func JsonP(c *gin.Context) {
 	data := map[string]interface{}{
 		"foo": "bar",
@@ -113,12 +123,14 @@ func JsonP(c *gin.Context) {
 	c.JSONP(http.StatusOK, data)
 }
 
+// Json 返回JSON数据
 func Json(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"html": "<b>Hello, world!</b>",
 	})
 }
 
+// SecureJson 返回SecureJson数据
 func SecureJson(c *gin.Context) {
 	names := []string{"lena", "austin", "foo"}
 
@@ -126,6 +138,7 @@ func SecureJson(c *gin.Context) {
 	c.SecureJSON(http.StatusOK, names)
 }
 
+// LoginForm 请求体绑定的结构体处理器
 func LoginForm(c *gin.Context) {
 	// 你可以使用显式绑定声明绑定 multipart form：
 	// c.ShouldBindWith(&form, binding.Form)
@@ -141,6 +154,7 @@ func LoginForm(c *gin.Context) {
 	}
 }
 
+// BindForm 请求体绑定的结构体处理器
 func BindForm(c *gin.Context) {
 	var person types.Person
 	// 如果是 `GET` 请求，只使用 `Form` 绑定引擎（`query`）。
@@ -156,6 +170,7 @@ func BindForm(c *gin.Context) {
 	}
 }
 
+// LoginJson json绑定的结构体
 func LoginJson(c *gin.Context) {
 	var json types.LoginForm
 	if err := c.ShouldBindJSON(&json); err != nil {
@@ -171,6 +186,7 @@ func LoginJson(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "you are logged in"})
 }
 
+// LoginXml xml绑定到结构体
 func LoginXml(c *gin.Context) {
 	var xml types.LoginForm
 	if err := c.ShouldBindXML(&xml); err != nil {
@@ -186,6 +202,7 @@ func LoginXml(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "you are logged in"})
 }
 
+// PostForm 从表单中获取数据
 func PostForm(c *gin.Context) {
 	message := c.PostForm("message")
 	nick := c.DefaultPostForm("nick", "anonymous")
@@ -197,6 +214,7 @@ func PostForm(c *gin.Context) {
 	})
 }
 
+// PostFormWithQuery 从表单和请求串中获取数据
 func PostFormWithQuery(c *gin.Context) {
 	// 请求示例
 	// POST /post?id=1234&page=1 HTTP/1.1
@@ -219,6 +237,7 @@ func PostFormWithQuery(c *gin.Context) {
 	})
 }
 
+// PostMultiFormWithQuery 从请求传和表单中获取多个同名key的数据
 func PostMultiFormWithQuery(c *gin.Context) {
 	ids := c.QueryMap("ids")
 	names := c.PostFormMap("names")
@@ -230,6 +249,7 @@ func PostMultiFormWithQuery(c *gin.Context) {
 	})
 }
 
+// PureJson 返回纯粹的JSON
 func PureJson(c *gin.Context) {
 	// 这里的sleep是用来模拟优雅关机的，当请求来后，会处理完这个请求后再关闭服务器
 	time.Sleep(10 * time.Second)
@@ -238,6 +258,7 @@ func PureJson(c *gin.Context) {
 	})
 }
 
+// SingleUpload 通过表单上传单个文件
 func SingleUpload(c *gin.Context) {
 	// 单文件
 	file, _ := c.FormFile("file")
@@ -253,6 +274,7 @@ func SingleUpload(c *gin.Context) {
 	c.String(http.StatusOK, fmt.Sprintf("'%s' uploaded!", file.Filename))
 }
 
+// MultiUpload 通过表单上传多个文件
 func MultiUpload(c *gin.Context) {
 	// Multipart form
 	form, _ := c.MultipartForm()
@@ -268,6 +290,7 @@ func MultiUpload(c *gin.Context) {
 	c.String(http.StatusOK, fmt.Sprintf("%d files uploaded!", len(files)))
 }
 
+// FetchFromReader 从reader中获取数据
 func FetchFromReader(c *gin.Context) {
 	response, err := http.Get("https://www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png")
 	if err != nil || response.StatusCode != http.StatusOK {
@@ -286,6 +309,7 @@ func FetchFromReader(c *gin.Context) {
 	c.DataFromReader(http.StatusOK, contentLength, contentType, reader, extraHeaders)
 }
 
+// LongAsync 在处理器中使用协程，需要使用上下文的副本
 func LongAsync(c *gin.Context) {
 	// 创建在 goroutine 中使用的副本
 	cCp := c.Copy()
@@ -298,6 +322,7 @@ func LongAsync(c *gin.Context) {
 	}()
 }
 
+// LongSync 同步方法使用原始上下文
 func LongSync(c *gin.Context) {
 	// 用 time.Sleep() 模拟一个长任务。
 	time.Sleep(5 * time.Second)
@@ -306,6 +331,7 @@ func LongSync(c *gin.Context) {
 	log.Println("Done! in path " + c.Request.URL.Path)
 }
 
+// GetDataByUri 通过uri访问资源
 func GetDataByUri(c *gin.Context) {
 	var person types.Person
 	if err := c.ShouldBindUri(&person); err != nil {
