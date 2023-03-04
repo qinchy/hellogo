@@ -5,7 +5,9 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	myHandler "github.com/qinchy/hellogo/handler"
+	"github.com/qinchy/hellogo/gin/globalvar"
+	myHandler "github.com/qinchy/hellogo/gin/handler"
+	"github.com/qinchy/hellogo/gin/types"
 	"github.com/qinchy/hellogo/pkg/proto"
 	"io"
 	"log"
@@ -29,14 +31,11 @@ func main() {
 	// 改写日志到控制台和文件
 	gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
 
-	r := gin.Default()
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
+	//r := gin.Default()
 
-	r.GET("/someJSON", func(c *gin.Context) {
+	globalvar.Route.GET("/ping", myHandler.Ping)
+
+	globalvar.Route.GET("/someJSON", func(c *gin.Context) {
 		data := map[string]interface{}{
 			"lang": "GO语言",
 			"tag":  "<br>",
@@ -46,7 +45,7 @@ func main() {
 		c.AsciiJSON(http.StatusOK, data)
 	})
 
-	r.GET("/moreJSON", func(c *gin.Context) {
+	globalvar.Route.GET("/moreJSON", func(c *gin.Context) {
 		// 你也可以使用一个结构体
 		var msg struct {
 			Name    string `json:"user"`
@@ -61,15 +60,15 @@ func main() {
 		c.JSON(http.StatusOK, msg)
 	})
 
-	r.GET("/someXML", func(c *gin.Context) {
+	globalvar.Route.GET("/someXML", func(c *gin.Context) {
 		c.XML(http.StatusOK, gin.H{"message": "hey", "status": http.StatusOK})
 	})
 
-	r.GET("/someYAML", func(c *gin.Context) {
+	globalvar.Route.GET("/someYAML", func(c *gin.Context) {
 		c.YAML(http.StatusOK, gin.H{"message": "hey", "status": http.StatusOK})
 	})
 
-	r.GET("/someProtoBuf", func(c *gin.Context) {
+	globalvar.Route.GET("/someProtoBuf", func(c *gin.Context) {
 		reps := []int64{int64(1), int64(2)}
 		label := "test"
 		// protobuf 的具体定义写在 pkg/proto 文件中。
@@ -82,27 +81,27 @@ func main() {
 		c.ProtoBuf(http.StatusOK, data)
 	})
 
-	r.LoadHTMLGlob("templates/**/*")
+	globalvar.Route.LoadHTMLGlob("templates/**/*")
 
-	r.GET("/index", func(c *gin.Context) {
+	globalvar.Route.GET("/index", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.tmpl", gin.H{
 			"title": "Main website",
 		})
 	})
 
-	r.GET("/posts/index", func(c *gin.Context) {
+	globalvar.Route.GET("/posts/index", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "posts/index.tmpl", gin.H{
 			"title": "Posts",
 		})
 	})
 
-	r.GET("/users/index", func(c *gin.Context) {
+	globalvar.Route.GET("/users/index", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "users/index.tmpl", gin.H{
 			"title": "Users",
 		})
 	})
 
-	r.GET("/JSONP", func(c *gin.Context) {
+	globalvar.Route.GET("/JSONP", func(c *gin.Context) {
 		data := map[string]interface{}{
 			"foo": "bar",
 		}
@@ -112,11 +111,11 @@ func main() {
 		c.JSONP(http.StatusOK, data)
 	})
 
-	r.POST("/loginForm", func(c *gin.Context) {
+	globalvar.Route.POST("/loginForm", func(c *gin.Context) {
 		// 你可以使用显式绑定声明绑定 multipart form：
 		// c.ShouldBindWith(&form, binding.Form)
 		// 或者简单地使用 ShouldBind 方法自动绑定：
-		var form LoginForm
+		var form types.LoginForm
 		// 在这种情况下，将自动选择合适的绑定
 		if c.ShouldBind(&form) == nil {
 			if form.User == "user" && form.Password == "password" {
@@ -128,8 +127,8 @@ func main() {
 	})
 
 	// curl -k -X POST --form "name=qinchy" --form "address=hangzhou" --form "birthday=2013-04-27" --form "id=987fbc97-4bed-5078-9f07-9141ba07c9f3"  "https://localhost/bindForm"
-	r.POST("/bindForm", func(c *gin.Context) {
-		var person Person
+	globalvar.Route.POST("/bindForm", func(c *gin.Context) {
+		var person types.Person
 		// 如果是 `GET` 请求，只使用 `Form` 绑定引擎（`query`）。
 		// 如果是 `POST` 请求，首先检查 `content-type` 是否为 `JSON` 或 `XML`，然后再使用 `Form`（`form-data`）。
 		// 查看更多：https://github.com/gin-gonic/gin/blob/master/binding/binding.go#L88
@@ -144,15 +143,15 @@ func main() {
 	})
 
 	// curl -k "https://localhost/getb?field_a=hello&field_b=world"
-	r.GET("/getb", myHandler.GetDataB)
+	globalvar.Route.GET("/getb", myHandler.GetDataB)
 	// curl -k "https://localhost/getb?field_a=hello&field_c=world"
-	r.GET("/getc", myHandler.GetDataC)
+	globalvar.Route.GET("/getc", myHandler.GetDataC)
 	// curl -k "https://localhost/getb?field_x=hello&field_d=world"
-	r.GET("/getd", myHandler.GetDataD)
+	globalvar.Route.GET("/getd", myHandler.GetDataD)
 
 	// 绑定 JSON ({"user": "user", "password": "password"})
-	r.POST("/loginJSON", func(c *gin.Context) {
-		var json LoginForm
+	globalvar.Route.POST("/loginJSON", func(c *gin.Context) {
+		var json types.LoginForm
 		if err := c.ShouldBindJSON(&json); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -179,8 +178,8 @@ func main() {
 	//	 <user>user</user>
 	//	 <password>password</password>
 	// </root>'
-	r.POST("/loginXML", func(c *gin.Context) {
-		var xml LoginForm
+	globalvar.Route.POST("/loginXML", func(c *gin.Context) {
+		var xml types.LoginForm
 		if err := c.ShouldBindXML(&xml); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -194,7 +193,7 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"status": "you are logged in"})
 	})
 
-	r.POST("/form_post", func(c *gin.Context) {
+	globalvar.Route.POST("/form_post", func(c *gin.Context) {
 		message := c.PostForm("message")
 		nick := c.DefaultPostForm("nick", "anonymous")
 
@@ -206,13 +205,13 @@ func main() {
 	})
 
 	// 提供 unicode 实体
-	r.GET("/json", func(c *gin.Context) {
+	globalvar.Route.GET("/json", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"html": "<b>Hello, world!</b>",
 		})
 	})
 
-	r.GET("/SecureJSON", func(c *gin.Context) {
+	globalvar.Route.GET("/SecureJSON", func(c *gin.Context) {
 		names := []string{"lena", "austin", "foo"}
 
 		// 将输出：while(1);["lena","austin","foo"]
@@ -220,7 +219,7 @@ func main() {
 	})
 
 	// curl -k -X POST "https://localhost/post1?id=11&page=1"
-	r.POST("/post1", func(c *gin.Context) {
+	globalvar.Route.POST("/post1", func(c *gin.Context) {
 		// 请求示例
 		// POST /post?id=1234&page=1 HTTP/1.1
 		// Content-Type: application/x-www-form-urlencoded
@@ -244,7 +243,7 @@ func main() {
 
 	// 映射查询字符串或表单参数
 	// curl -k -X POST --location "https://localhost/post2?ids\[a\]=11&ids\[b\]=22" --header "Content-Type: application/x-www-form-urlencoded" -d "names[first]=thinkerou&names[second]=tianou"
-	r.POST("/post2", func(c *gin.Context) {
+	globalvar.Route.POST("/post2", func(c *gin.Context) {
 		ids := c.QueryMap("ids")
 		names := c.PostFormMap("names")
 
@@ -256,7 +255,7 @@ func main() {
 	})
 
 	// 提供字面字符
-	r.GET("/purejson", func(c *gin.Context) {
+	globalvar.Route.GET("/purejson", func(c *gin.Context) {
 		// 这里的sleep是用来模拟优雅关机的，当请求来后，会处理完这个请求后再关闭服务器
 		time.Sleep(10 * time.Second)
 		c.PureJSON(200, gin.H{
@@ -266,8 +265,8 @@ func main() {
 
 	// 为 multipart forms 设置较低的内存限制 (默认是 32 MiB)
 	// curl -k -X POST https://localhost/singleupload  -F "file=@D:\Source_Code\go\src\github.com\qinchy\hellogo\cmd\main.go"   -H "Content-Type: multipart/form-data"
-	r.MaxMultipartMemory = 8 << 20 // 8 MiB
-	r.POST("/singleupload", func(c *gin.Context) {
+	globalvar.Route.MaxMultipartMemory = 8 << 20 // 8 MiB
+	globalvar.Route.POST("/singleupload", func(c *gin.Context) {
 		// 单文件
 		file, _ := c.FormFile("file")
 		log.Println(file.Filename)
@@ -283,7 +282,7 @@ func main() {
 	})
 
 	// curl -k -X POST https://localhost/multiupload  -F "upload[]=@C:\Users\Administrator\AppData\Local\Temp\GoLand\___go_build_github_com_qinchy_hellogo_cmd.exe"   -F "upload[]=@D:\Source_Code\go\bin\hellogo\go_build_github_com_qinchy_hellogo.exe"   -H "Content-Type: multipart/form-data"
-	r.POST("/multiupload", func(c *gin.Context) {
+	globalvar.Route.POST("/multiupload", func(c *gin.Context) {
 		// Multipart form
 		form, _ := c.MultipartForm()
 		files := form.File["upload[]"]
@@ -298,7 +297,7 @@ func main() {
 		c.String(http.StatusOK, fmt.Sprintf("%d files uploaded!", len(files)))
 	})
 
-	r.GET("/someDataFromReader", func(c *gin.Context) {
+	globalvar.Route.GET("/someDataFromReader", func(c *gin.Context) {
 		response, err := http.Get("https://www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png")
 		if err != nil || response.StatusCode != http.StatusOK {
 			c.Status(http.StatusServiceUnavailable)
@@ -319,7 +318,7 @@ func main() {
 	//  =================使用 BasicAuth 中间件==================
 	// 路由组使用 gin.BasicAuth() 中间件
 	// gin.Accounts 是 map[string]string 的一种快捷方式
-	authorized := r.Group("/admin", gin.BasicAuth(gin.Accounts{
+	authorized := globalvar.Route.Group("/admin", gin.BasicAuth(gin.Accounts{
 		"foo":    "bar",
 		"austin": "1234",
 		"lena":   "hello2",
@@ -328,14 +327,14 @@ func main() {
 
 	// /admin/secrets 端点
 	// 触发 "localhost:443/admin/secrets
-	authorized.GET("/secrets", getting)
+	authorized.GET("/secrets", myHandler.Getting)
 	//  =================使用 BasicAuth 中间件==================
 
 	// 任意协议的请求到testting，均调用startPage函数
-	r.Any("/testing", startPage)
+	globalvar.Route.Any("/testing", myHandler.StartPage)
 
 	// 当在中间件或 handler 中启动新的 Goroutine 时，不能使用原始的上下文，必须使用只读副本。
-	r.GET("/long_async", func(c *gin.Context) {
+	globalvar.Route.GET("/long_async", func(c *gin.Context) {
 		// 创建在 goroutine 中使用的副本
 		cCp := c.Copy()
 		go func() {
@@ -347,7 +346,7 @@ func main() {
 		}()
 	})
 
-	r.GET("/long_sync", func(c *gin.Context) {
+	globalvar.Route.GET("/long_sync", func(c *gin.Context) {
 		// 用 time.Sleep() 模拟一个长任务。
 		time.Sleep(5 * time.Second)
 
@@ -355,8 +354,8 @@ func main() {
 		log.Println("Done! in path " + c.Request.URL.Path)
 	})
 
-	r.GET("/:name/:id", func(c *gin.Context) {
-		var person Person
+	globalvar.Route.GET("/:name/:id", func(c *gin.Context) {
+		var person types.Person
 		if err := c.ShouldBindUri(&person); err != nil {
 			c.JSON(400, gin.H{"msg": err.Error()})
 			return
@@ -370,7 +369,7 @@ func main() {
 	// 增加优雅停机feature
 	srv := &http.Server{
 		Addr:    ":443",
-		Handler: r,
+		Handler: globalvar.Route,
 		TLSConfig: &tls.Config{
 			MinVersion:               tls.VersionTLS12,
 			PreferServerCipherSuites: true,
@@ -379,7 +378,7 @@ func main() {
 
 	// 协程启动服务器
 	go func() {
-		if err := srv.ListenAndServeTLS("./cert/server.pem", "./cert/server.key"); err != nil && err != http.ErrServerClosed {
+		if err := srv.ListenAndServeTLS("./gin/cert/server.pem", "./gin/cert/server.key"); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("服务器启动失败，错误原因: %s\n", err)
 		}
 	}()
@@ -401,43 +400,4 @@ func main() {
 		log.Fatalf("服务器关闭出现异常，错误原因：%s\n", err)
 	}
 	log.Println("服务器正常停止")
-}
-
-func getting(c *gin.Context) {
-	// 获取用户，它是由 BasicAuth 中间件设置的
-	user := c.MustGet(gin.AuthUserKey).(string)
-	if secret, ok := secrets[user]; ok {
-		c.JSON(http.StatusOK, gin.H{"user": user, "secret": secret})
-	} else {
-		c.JSON(http.StatusOK, gin.H{"user": user, "secret": "NO SECRET :("})
-	}
-}
-
-// startPage
-func startPage(c *gin.Context) {
-	var person Person
-	if c.ShouldBindQuery(&person) == nil {
-		log.Println("====== Only Bind By Query String ======")
-		log.Println(person.Name)
-		log.Println(person.Address)
-	}
-	c.String(200, "Success")
-}
-
-type LoginForm struct {
-	User     string `form:"user" json:"user" xml:"user" binding:"required"`
-	Password string `form:"password" json:"password" xml:"password" binding:"required"`
-}
-
-type Person struct {
-	ID       string    `form:"id" uri:"id" binding:"required,uuid"`
-	Name     string    `form:"name" uri:"name" binding:"required"`
-	Address  string    `form:"address" uri:"address"`
-	Birthday time.Time `form:"birthday" time_format:"2006-01-02" time_utc:"1"`
-}
-
-var secrets = gin.H{
-	"foo":    gin.H{"email": "foo@bar.com", "phone": "123433"},
-	"austin": gin.H{"email": "austin@example.com", "phone": "666"},
-	"lena":   gin.H{"email": "lena@guapa.com", "phone": "523443"},
 }

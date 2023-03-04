@@ -2,7 +2,7 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
-	myTypes "github.com/qinchy/hellogo/types"
+	myTypes "github.com/qinchy/hellogo/gin/types"
 )
 
 func GetDataB(c *gin.Context) {
