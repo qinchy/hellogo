@@ -3,9 +3,12 @@ package globalvar
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"io"
+	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	"github.com/rifflock/lfshook"
+	"github.com/sirupsen/logrus"
 	"log"
 	"os"
+	"time"
 )
 
 var Secrets = gin.H{
@@ -24,33 +27,99 @@ func init() {
 	//  gin相关
 	gin.DisableConsoleColor() // 禁止控制台日志颜色
 
-	// 控制日志输出到文件
-	f, _ := os.OpenFile("gin.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0766)
-	// 改写日志到控制台和文件
-	gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
-
-	gin.DebugPrintRouteFunc = func(httpMethod, absolutePath, handlerName string, nuHandlers int) {
-		log.Printf("endpoint %v %v %v %v\n", httpMethod, absolutePath, handlerName, nuHandlers)
-	}
-
-	// 返回什么格式,日志格式就是什么样子
-	var formatter = func(param gin.LogFormatterParams) string {
-		return fmt.Sprintf("客户端IP:%s,请求时间:[%s],请求方式:%s,请求地址:%s,http协议版本:%s,请求状态码:%d,响应时间:%s,客户端:%s，错误信息:%s\n",
-			param.ClientIP,
-			param.TimeStamp.Format("2006年01月02日 15:03:04"),
-			param.Method,
-			param.Path,
-			param.Request.Proto,
-			param.StatusCode,
-			param.Latency,
-			param.Request.UserAgent(),
-			param.ErrorMessage,
-		)
-	}
-	gin.LoggerWithFormatter(formatter)
-
 	gin.SetMode(gin.ReleaseMode)
 
 	Route = gin.Default()
+	Route.Use(loggerToFile())
 
+}
+
+// LoggerToFile 日志记录到文件
+func loggerToFile() gin.HandlerFunc {
+
+	//写入文件
+	src, err := os.OpenFile("./gin.log", os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	if err != nil {
+		fmt.Println("err", err)
+	}
+
+	//实例化
+	logger := logrus.New()
+
+	//设置输出
+	logger.Out = src
+
+	//设置日志级别
+	logger.SetLevel(logrus.DebugLevel)
+
+	// 设置 rotatelogs
+	logWriter, err := rotatelogs.New(
+		// 分割后的文件名称
+		src.Name()+".%Y%m%d.log",
+
+		// 生成软链，指向最新日志文件
+		rotatelogs.WithLinkName(src.Name()),
+
+		// 设置最大保存时间(7天)
+		rotatelogs.WithMaxAge(7*24*time.Hour),
+
+		// 设置日志切割时间间隔(1天)
+		rotatelogs.WithRotationTime(24*time.Hour),
+	)
+
+	writeMap := lfshook.WriterMap{
+		logrus.InfoLevel:  logWriter,
+		logrus.FatalLevel: logWriter,
+		logrus.DebugLevel: logWriter,
+		logrus.WarnLevel:  logWriter,
+		logrus.ErrorLevel: logWriter,
+		logrus.PanicLevel: logWriter,
+	}
+
+	lfHook := lfshook.NewHook(writeMap, &logrus.TextFormatter{
+		TimestampFormat: "2006-01-02 15:04:05",
+	})
+
+	// 新增 Hook
+	logger.AddHook(lfHook)
+
+	//设置日志格式
+	logger.SetFormatter(&logrus.TextFormatter{
+		TimestampFormat: "2006-01-02 15:04:05",
+	})
+
+	return func(c *gin.Context) {
+		// 开始时间
+		startTime := time.Now()
+
+		// 处理请求
+		c.Next()
+
+		// 结束时间
+		endTime := time.Now()
+
+		// 执行时间
+		latencyTime := endTime.Sub(startTime)
+
+		// 请求方式
+		reqMethod := c.Request.Method
+
+		// 请求路由
+		reqUri := c.Request.RequestURI
+
+		// 状态码
+		statusCode := c.Writer.Status()
+
+		// 请求IP
+		clientIP := c.ClientIP()
+
+		// 日志格式
+		logger.WithFields(logrus.Fields{
+			"status_code":  statusCode,
+			"latency_time": latencyTime,
+			"client_ip":    clientIP,
+			"req_method":   reqMethod,
+			"req_uri":      reqUri,
+		}).Info()
+	}
 }
