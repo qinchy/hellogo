@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"github.com/qinchy/hellogo/gin/globalvar"
 	"github.com/qinchy/hellogo/gin/handler"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,7 +12,7 @@ import (
 )
 
 func main() {
-	log.Println("开始启动gin服务器...")
+	globalvar.Logger.Info("开始启动gin服务器...")
 	//go read.ReadFile()
 	//go write.WriteFile()
 	//go scheduler.PrintTimeEveryMinute()
@@ -37,11 +36,11 @@ func main() {
 	// 协程启动服务器
 	go func() {
 		if err := srv.ListenAndServeTLS("./gin/cert/server.pem", "./gin/cert/server.key"); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("服务器启动失败，错误原因: %s\n", err)
+			globalvar.Logger.Fatalf("服务器启动失败，错误原因: %s\n", err)
 		}
 	}()
 
-	log.Println("服务器启动完成")
+	globalvar.Logger.Info("服务器启动完成")
 
 	// 定义一个关闭服务器接受信号的通道
 	quit := make(chan os.Signal)
@@ -49,13 +48,13 @@ func main() {
 	signal.Notify(quit, os.Interrupt)
 	// 如果从通道中接收信号，就调用srv的shutdown优雅的关闭服务器
 	<-quit
-	log.Println("接收到关闭信号，服务器关闭中...")
+	globalvar.Logger.Info("接收到关闭信号，服务器关闭中...")
 
 	// 定义一个在后台5秒钟关闭的context
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("服务器关闭出现异常，错误原因：%s\n", err)
+		globalvar.Logger.Fatalf("服务器关闭出现异常，错误原因：%s\n", err)
 	}
-	log.Println("服务器正常停止")
+	globalvar.Logger.Info("服务器正常停止")
 }

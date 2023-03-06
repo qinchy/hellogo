@@ -6,7 +6,6 @@ import (
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
-	"log"
 	"os"
 	"time"
 )
@@ -19,17 +18,21 @@ var Secrets = gin.H{
 var (
 	// Route 全局Route
 	Route *gin.Engine
+
+	//Logger 全局Logger
+	Logger *logrus.Logger
 )
 
 // init 定制化gin的参数可以放到这里
 func init() {
-	log.Print("这里是demo日志")
 	//  gin相关
 	gin.DisableConsoleColor() // 禁止控制台日志颜色
 
 	gin.SetMode(gin.ReleaseMode)
 
 	Route = gin.Default()
+	Logger = logrus.New()
+
 	Route.Use(loggerToFile())
 
 }
@@ -38,27 +41,25 @@ func init() {
 func loggerToFile() gin.HandlerFunc {
 
 	//写入文件
-	src, err := os.OpenFile("./gin.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModeAppend)
+	logFile, err := os.OpenFile("./gin.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModeAppend)
 	if err != nil {
 		fmt.Println("err", err)
 	}
 
-	//实例化
-	logger := logrus.New()
-
 	//设置输出
-	logger.Out = src
+	Logger.Out = logFile
 
 	//设置日志级别
-	logger.SetLevel(logrus.DebugLevel)
+	Logger.SetLevel(logrus.DebugLevel)
 
 	// 设置 rotatelogs
 	logWriter, err := rotatelogs.New(
 		// 分割后的文件名称
-		(*src).Name()+".%Y%m%d.log",
+		// TODO 这里第二次启动logFile会出现空指针，估计是gin.log变成了软链接的原因，待修复。
+		(*logFile).Name()+".%Y%m%d",
 
 		// 生成软链，指向最新日志文件
-		rotatelogs.WithLinkName((*src).Name()),
+		rotatelogs.WithLinkName((*logFile).Name()),
 
 		// 设置最大保存时间(7天)
 		rotatelogs.WithMaxAge(7*24*time.Hour),
@@ -81,10 +82,10 @@ func loggerToFile() gin.HandlerFunc {
 	})
 
 	// 新增 Hook
-	logger.AddHook(lfHook)
+	Logger.AddHook(lfHook)
 
 	//设置日志格式
-	logger.SetFormatter(&logrus.TextFormatter{
+	Logger.SetFormatter(&logrus.TextFormatter{
 		TimestampFormat: "2006-01-02 15:04:05",
 	})
 
@@ -114,12 +115,12 @@ func loggerToFile() gin.HandlerFunc {
 		clientIP := c.ClientIP()
 
 		// 日志格式
-		logger.WithFields(logrus.Fields{
+		Logger.WithFields(logrus.Fields{
 			"status_code":  statusCode,
 			"latency_time": latencyTime,
 			"client_ip":    clientIP,
 			"req_method":   reqMethod,
 			"req_uri":      reqUri,
-		}).Info()
+		}).Debug()
 	}
 }

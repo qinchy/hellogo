@@ -6,6 +6,7 @@ import (
 	"github.com/qinchy/hellogo/gin/globalvar"
 	"github.com/qinchy/hellogo/gin/proto"
 	"github.com/qinchy/hellogo/gin/types"
+	"github.com/sirupsen/logrus"
 	"log"
 	"net/http"
 	"time"
@@ -22,9 +23,11 @@ func Ping(c *gin.Context) {
 func StartPage(c *gin.Context) {
 	var person types.Person
 	if c.ShouldBindQuery(&person) == nil {
-		log.Println("====== Only Bind By Query String ======")
-		log.Println(person.Name)
-		log.Println(person.Address)
+		globalvar.Logger.WithFields(logrus.Fields{
+			"Name":     person.Name,
+			"Address":  person.Address,
+			"Birthday": person.Birthday,
+		}).Info("请求参数")
 	}
 	c.String(200, "Success")
 }
@@ -161,9 +164,11 @@ func BindForm(c *gin.Context) {
 	// 如果是 `POST` 请求，首先检查 `content-type` 是否为 `JSON` 或 `XML`，然后再使用 `Form`（`form-data`）。
 	// 查看更多：https://github.com/gin-gonic/gin/blob/master/binding/binding.go#L88
 	if c.ShouldBind(&person) == nil {
-		log.Println(person.Name)
-		log.Println(person.Address)
-		log.Println(person.Birthday)
+		globalvar.Logger.WithFields(logrus.Fields{
+			"Name":     person.Name,
+			"Address":  person.Address,
+			"Birthday": person.Birthday,
+		}).Info("请求参数")
 		c.String(200, "Success")
 		return
 	}
@@ -244,6 +249,10 @@ func PostMultiFormWithQuery(c *gin.Context) {
 	names := c.PostFormMap("names")
 
 	log.Printf("ids: %v; names: %v", ids, names)
+	globalvar.Logger.WithFields(logrus.Fields{
+		"ids":   ids,
+		"names": names,
+	}).Info("请求参数")
 	c.JSON(200, gin.H{
 		"ids":  ids,
 		"name": names,
@@ -263,12 +272,10 @@ func PureJson(c *gin.Context) {
 func SingleUpload(c *gin.Context) {
 	// 单文件
 	file, _ := c.FormFile("file")
-	log.Println(file.Filename)
 
 	// 这里的当前目录是整个工程的路径，比如当前是$GOPATH/src/github.com/qinchy/hellogo
 	// 感觉这个目录是go.mod中module的路径
 	dst := "./" + file.Filename
-	log.Printf("dst:%v", dst)
 	// 上传文件至指定的完整文件路径
 	c.SaveUploadedFile(file, dst)
 
@@ -282,8 +289,6 @@ func MultiUpload(c *gin.Context) {
 	files := form.File["upload[]"]
 
 	for _, file := range files {
-		log.Println(file.Filename)
-
 		dst := "./" + file.Filename + ".bak"
 		// 上传文件至指定目录
 		c.SaveUploadedFile(file, dst)
@@ -319,7 +324,9 @@ func LongAsync(c *gin.Context) {
 		time.Sleep(5 * time.Second)
 
 		// 请注意您使用的是复制的上下文 "cCp"，这一点很重要
-		log.Println("Done! in path " + cCp.Request.URL.Path)
+		globalvar.Logger.WithFields(logrus.Fields{
+			"Path": cCp.Request.URL.Path,
+		}).Info("Done! in path ")
 	}()
 }
 
@@ -329,7 +336,9 @@ func LongSync(c *gin.Context) {
 	time.Sleep(5 * time.Second)
 
 	// 因为没有使用 goroutine，不需要拷贝上下文
-	log.Println("Done! in path " + c.Request.URL.Path)
+	globalvar.Logger.WithFields(logrus.Fields{
+		"Path": c.Request.URL.Path,
+	}).Info("Done! in path ")
 }
 
 // GetDataByUri 通过uri访问资源
