@@ -43,7 +43,7 @@ func loggerToFile() gin.HandlerFunc {
 	//写入文件
 	logFile, err := os.OpenFile("./gin.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModeAppend)
 	if err != nil {
-		fmt.Println("err", err)
+		panic("系统初始化日志时出现错误：" + err.Error())
 	}
 
 	//设置输出
@@ -51,6 +51,8 @@ func loggerToFile() gin.HandlerFunc {
 
 	//设置日志级别
 	Logger.SetLevel(logrus.DebugLevel)
+
+	fmt.Println(logFile)
 
 	// 设置 rotatelogs
 	logWriter, err := rotatelogs.New(
