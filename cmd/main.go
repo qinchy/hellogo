@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"github.com/qinchy/hellogo/gin/globalvar"
+	. "github.com/qinchy/hellogo/gin/globalvar"
 	"github.com/qinchy/hellogo/gin/handler"
 	"net/http"
 	"os"
@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	globalvar.Logger.Info("开始启动gin服务器...")
+	Logger.Info("开始启动gin服务器...")
 	//go read.ReadFile()
 	//go write.WriteFile()
 	//go scheduler.PrintTimeEveryMinute()
@@ -26,7 +26,7 @@ func main() {
 	// 增加优雅停机feature
 	srv := &http.Server{
 		Addr:    ":443",
-		Handler: globalvar.Route,
+		Handler: Route,
 		TLSConfig: &tls.Config{
 			MinVersion:               tls.VersionTLS12,
 			PreferServerCipherSuites: true,
@@ -36,11 +36,11 @@ func main() {
 	// 协程启动服务器
 	go func() {
 		if err := srv.ListenAndServeTLS("./gin/cert/server.pem", "./gin/cert/server.key"); err != nil && err != http.ErrServerClosed {
-			globalvar.Logger.Fatalf("服务器启动失败，错误原因: %s\n", err)
+			Logger.Fatalf("服务器启动失败，错误原因: %s\n", err)
 		}
 	}()
 
-	globalvar.Logger.Info("服务器启动完成")
+	Logger.Info("服务器启动完成")
 
 	// 定义一个关闭服务器接受信号的通道
 	quit := make(chan os.Signal)
@@ -48,13 +48,13 @@ func main() {
 	signal.Notify(quit, os.Interrupt)
 	// 如果从通道中接收信号，就调用srv的shutdown优雅的关闭服务器
 	<-quit
-	globalvar.Logger.Info("接收到关闭信号，服务器关闭中...")
+	Logger.Info("接收到关闭信号，服务器关闭中...")
 
 	// 定义一个在后台5秒钟关闭的context
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		globalvar.Logger.Fatalf("服务器关闭出现异常，错误原因：%s\n", err)
+		Logger.Fatalf("服务器关闭出现异常，错误原因：%s\n", err)
 	}
-	globalvar.Logger.Info("服务器正常停止")
+	Logger.Info("服务器正常停止")
 }

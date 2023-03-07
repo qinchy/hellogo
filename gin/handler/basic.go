@@ -3,7 +3,7 @@ package handler
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/qinchy/hellogo/gin/globalvar"
+	. "github.com/qinchy/hellogo/gin/globalvar"
 	"github.com/qinchy/hellogo/gin/proto"
 	"github.com/qinchy/hellogo/gin/types"
 	"github.com/sirupsen/logrus"
@@ -23,7 +23,7 @@ func Ping(c *gin.Context) {
 func StartPage(c *gin.Context) {
 	var person types.Person
 	if c.ShouldBindQuery(&person) == nil {
-		globalvar.Logger.WithFields(logrus.Fields{
+		Logger.WithFields(logrus.Fields{
 			"Name":     person.Name,
 			"Address":  person.Address,
 			"Birthday": person.Birthday,
@@ -36,7 +36,7 @@ func StartPage(c *gin.Context) {
 func Getting(c *gin.Context) {
 	// 获取用户，它是由 BasicAuth 中间件设置的
 	user := c.MustGet(gin.AuthUserKey).(string)
-	if secret, ok := globalvar.Secrets[user]; ok {
+	if secret, ok := Secrets[user]; ok {
 		c.JSON(http.StatusOK, gin.H{"user": user, "secret": secret})
 	} else {
 		c.JSON(http.StatusOK, gin.H{"user": user, "secret": "NO SECRET :("})
@@ -164,7 +164,7 @@ func BindForm(c *gin.Context) {
 	// 如果是 `POST` 请求，首先检查 `content-type` 是否为 `JSON` 或 `XML`，然后再使用 `Form`（`form-data`）。
 	// 查看更多：https://github.com/gin-gonic/gin/blob/master/binding/binding.go#L88
 	if c.ShouldBind(&person) == nil {
-		globalvar.Logger.WithFields(logrus.Fields{
+		Logger.WithFields(logrus.Fields{
 			"Name":     person.Name,
 			"Address":  person.Address,
 			"Birthday": person.Birthday,
@@ -249,7 +249,7 @@ func PostMultiFormWithQuery(c *gin.Context) {
 	names := c.PostFormMap("names")
 
 	log.Printf("ids: %v; names: %v", ids, names)
-	globalvar.Logger.WithFields(logrus.Fields{
+	Logger.WithFields(logrus.Fields{
 		"ids":   ids,
 		"names": names,
 	}).Info("请求参数")
@@ -277,7 +277,10 @@ func SingleUpload(c *gin.Context) {
 	// 感觉这个目录是go.mod中module的路径
 	dst := "./" + file.Filename
 	// 上传文件至指定的完整文件路径
-	c.SaveUploadedFile(file, dst)
+	err := c.SaveUploadedFile(file, dst)
+	if err != nil {
+		Logger.Fatalf("上传文件时出现异常：%s", err.Error())
+	}
 
 	c.String(http.StatusOK, fmt.Sprintf("'%s' uploaded!", file.Filename))
 }
@@ -291,7 +294,10 @@ func MultiUpload(c *gin.Context) {
 	for _, file := range files {
 		dst := "./" + file.Filename + ".bak"
 		// 上传文件至指定目录
-		c.SaveUploadedFile(file, dst)
+		err := c.SaveUploadedFile(file, dst)
+		if err != nil {
+			Logger.Fatalf("上传文件时出现异常：%s", err.Error())
+		}
 	}
 	c.String(http.StatusOK, fmt.Sprintf("%d files uploaded!", len(files)))
 }
@@ -324,7 +330,7 @@ func LongAsync(c *gin.Context) {
 		time.Sleep(5 * time.Second)
 
 		// 请注意您使用的是复制的上下文 "cCp"，这一点很重要
-		globalvar.Logger.WithFields(logrus.Fields{
+		Logger.WithFields(logrus.Fields{
 			"Path": cCp.Request.URL.Path,
 		}).Info("Done! in path ")
 	}()
@@ -336,7 +342,7 @@ func LongSync(c *gin.Context) {
 	time.Sleep(5 * time.Second)
 
 	// 因为没有使用 goroutine，不需要拷贝上下文
-	globalvar.Logger.WithFields(logrus.Fields{
+	Logger.WithFields(logrus.Fields{
 		"Path": c.Request.URL.Path,
 	}).Info("Done! in path ")
 }
