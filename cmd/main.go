@@ -5,6 +5,9 @@ import (
 	"crypto/tls"
 	. "github.com/qinchy/hellogo/gin/globalvar"
 	"github.com/qinchy/hellogo/gin/handler"
+	"github.com/qinchy/hellogo/pkg/read"
+	"github.com/qinchy/hellogo/pkg/scheduler"
+	"github.com/qinchy/hellogo/pkg/write"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,10 +15,11 @@ import (
 )
 
 func main() {
+	Logger.Info("开始初始化任务引擎...")
+	schedule()
+	Logger.Info("任务引擎初始化完成")
+
 	Logger.Info("开始启动gin服务器...")
-	//go read.ReadFile()
-	//go write.WriteFile()
-	//go scheduler.PrintTimeEveryMinute()
 
 	// 所有请求路径及函数都放这里便于管理
 	handler.Handler()
@@ -57,4 +61,10 @@ func main() {
 		Logger.Fatalf("服务器关闭出现异常，错误原因：%s\n", err)
 	}
 	Logger.Info("服务器正常停止")
+}
+
+func schedule() {
+	go read.ReadFile()
+	go write.WriteFile()
+	go scheduler.PrintTimeEveryMinute()
 }
