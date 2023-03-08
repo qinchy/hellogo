@@ -1,7 +1,6 @@
 package globalvar
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
@@ -51,9 +50,7 @@ func loggerToFile() gin.HandlerFunc {
 
 	//设置日志级别
 	Logger.SetLevel(logrus.DebugLevel)
-
-	fmt.Println(logFile)
-
+	
 	// 设置 rotatelogs
 	logWriter, err := rotatelogs.New(
 		// 分割后的文件名称
