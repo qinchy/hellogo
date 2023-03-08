@@ -57,7 +57,9 @@ func loggerToFile() gin.HandlerFunc {
 	// 设置 rotatelogs
 	logWriter, err := rotatelogs.New(
 		// 分割后的文件名称
-		// TODO 这里第二次启动logFile会出现空指针，估计是gin.log变成了软链接的原因，待修复。
+		// 这里在windows上非首次启动会报错，linux上没问题。
+		// 具体原因是windows上用WithLinkName创建软链接和linux上实现不一样，windows会把gin.log修改成只读，导致后续启动时logFile是空指针。
+		// windows上可考虑把所有日志文件删除，或者修改gin.log为非只读。
 		(*logFile).Name()+".%Y%m%d",
 
 		// 生成软链，指向最新日志文件
