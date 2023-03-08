@@ -367,3 +367,16 @@ func GetBookable(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 }
+
+// Cookie cookie演示
+func Cookie(c *gin.Context) {
+
+	cookie, err := c.Cookie("gin_cookie")
+
+	if err != nil {
+		cookie = "NotSet"
+		c.SetCookie("gin_cookie", "test", 3600, "/", "localhost", false, true)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"Cookie": cookie})
+}

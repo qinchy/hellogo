@@ -36,6 +36,7 @@ type LoginForm struct {
 }
 
 type Booking struct {
-	CheckIn  time.Time `form:"check_in" binding:"required,bookabledate" time_format:"2006-01-02"`
+	CheckIn time.Time `form:"check_in" binding:"required,bookabledate" time_format:"2006-01-02"`
+	// CheckOut应该大于当前时间，且要大于CheckIn，日期格式为YYYY-MM-DD
 	CheckOut time.Time `form:"check_out" binding:"required,gtfield=CheckIn,bookabledate" time_format:"2006-01-02"`
 }

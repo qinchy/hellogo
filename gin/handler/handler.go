@@ -86,6 +86,7 @@ func Handler() {
 	//  =================使用 BasicAuth 中间件==================
 	// 路由组使用 gin.BasicAuth() 中间件
 	// gin.Accounts 是 map[string]string 的一种快捷方式
+	// authorized是一个路由组
 	authorized := Route.Group("/admin", gin.BasicAuth(gin.Accounts{
 		"foo":    "bar",
 		"austin": "1234",
@@ -95,6 +96,7 @@ func Handler() {
 
 	// /admin/secrets 端点
 	// 触发 "localhost:443/admin/secrets
+	// 路由组下面的子路由
 	authorized.GET("/secrets", Getting)
 	//  =================使用 BasicAuth 中间件==================
 
@@ -111,4 +113,28 @@ func Handler() {
 	// curl -k "https://localhost/bookable?check_in=2023-04-16&check_out=2023-04-17"
 	// curl -k "https://localhost/bookable?check_in=2023-03-08&check_out=2023-03-09"
 	Route.GET("/bookable", GetBookable)
+
+	Route.GET("/cookie", Cookie)
+
+	// 简单的路由组: v1
+	v1 := Route.Group("/v1")
+	{
+		// curl -k -X POST "https://localhost/v1/postformwithquery?id=11&page=1"
+		v1.POST("/postformwithquery", PostFormWithQuery)
+
+		// 映射查询字符串或表单参数
+		// curl -k -X POST --location "https://localhost/v1/postmultiformwithquery?ids\[a\]=11&ids\[b\]=22" --header "Content-Type: application/x-www-form-urlencoded" -d "names[first]=thinkerou&names[second]=tianou"
+		v1.POST("/postmultiformwithquery", PostMultiFormWithQuery)
+	}
+
+	// 简单的路由组: v2
+	v2 := Route.Group("/v2")
+	{
+		// curl -k -X POST "https://localhost/v2/postformwithquery?id=11&page=1"
+		v2.POST("/postformwithquery", PostFormWithQuery)
+
+		// 映射查询字符串或表单参数
+		// curl -k -X POST --location "https://localhost/v2/postmultiformwithquery?ids\[a\]=11&ids\[b\]=22" --header "Content-Type: application/x-www-form-urlencoded" -d "names[first]=thinkerou&names[second]=tianou"
+		v2.POST("/postmultiformwithquery", PostMultiFormWithQuery)
+	}
 }
