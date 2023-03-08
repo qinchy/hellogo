@@ -34,3 +34,8 @@ type LoginForm struct {
 	User     string `form:"user" json:"user" xml:"user" binding:"required"`
 	Password string `form:"password" json:"password" xml:"password" binding:"required"`
 }
+
+type Booking struct {
+	CheckIn  time.Time `form:"check_in" binding:"required,bookabledate" time_format:"2006-01-02"`
+	CheckOut time.Time `form:"check_out" binding:"required,gtfield=CheckIn,bookabledate" time_format:"2006-01-02"`
+}

@@ -2,12 +2,26 @@ package globalvar
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
 	"os"
 	"time"
 )
+
+var bookableDate validator.Func = func(fl validator.FieldLevel) bool {
+	date, ok := fl.Field().Interface().(time.Time)
+	if ok {
+		today := time.Now()
+		// 如果订购时间小于当前时间则不合法
+		if today.After(date) {
+			return false
+		}
+	}
+	return true
+}
 
 var Secrets = gin.H{
 	"foo":    gin.H{"email": "foo@bar.com", "phone": "123433"},
@@ -34,6 +48,12 @@ func init() {
 
 	Route.Use(loggerToFile())
 
+	// 注册校验器
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		// 这里的bookabledate就是校验器的名称，在结构体的required中使用
+		// bookableDate是校验的具体实现逻辑，是一个函数类型
+		v.RegisterValidation("bookabledate", bookableDate)
+	}
 }
 
 // LoggerToFile 日志记录到文件

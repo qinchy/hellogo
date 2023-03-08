@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	. "github.com/qinchy/hellogo/gin/globalvar"
 	"github.com/qinchy/hellogo/gin/proto"
 	"github.com/qinchy/hellogo/gin/types"
@@ -355,4 +356,14 @@ func GetDataByUri(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{"name": person.Name, "uuid": person.ID})
+}
+
+// GetBookable 是否可以订购，校验
+func GetBookable(c *gin.Context) {
+	var b types.Booking
+	if err := c.ShouldBindWith(&b, binding.Query); err == nil {
+		c.JSON(http.StatusOK, gin.H{"message": "Booking dates are valid!"})
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
 }

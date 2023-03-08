@@ -107,4 +107,8 @@ func Handler() {
 	Route.GET("/longsync", LongSync)
 
 	Route.GET("/:name/:id", GetDataByUri)
+
+	// curl -k "https://localhost/bookable?check_in=2023-04-16&check_out=2023-04-17"
+	// curl -k "https://localhost/bookable?check_in=2023-03-08&check_out=2023-03-09"
+	Route.GET("/bookable", GetBookable)
 }
