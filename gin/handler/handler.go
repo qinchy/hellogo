@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	. "github.com/qinchy/hellogo/gin/globalvar"
+	"net/http"
 )
 
 // Handler 所有handler的集合都放这里
@@ -137,4 +138,24 @@ func Handler() {
 		// curl -k -X POST --location "https://localhost/v2/postmultiformwithquery?ids\[a\]=11&ids\[b\]=22" --header "Content-Type: application/x-www-form-urlencoded" -d "names[first]=thinkerou&names[second]=tianou"
 		v2.POST("/postmultiformwithquery", PostMultiFormWithQuery)
 	}
+
+	// 外部重定向，即浏览器重定向到其他服务器。浏览器地址栏会变。
+	Route.GET("/redirect1", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "https://www.baidu.com/")
+	})
+
+	// 外部重定向，即浏览器重定向到同服务器。浏览器地址栏会变。
+	Route.GET("/redirect2", func(c *gin.Context) {
+		c.Redirect(http.StatusFound, "/ping")
+	})
+
+	// 内部重定向，浏览器无感知。地址栏不变。
+	Route.GET("/redirect3", func(c *gin.Context) {
+		c.Request.URL.Path = "/redict4"
+		Route.HandleContext(c)
+	})
+
+	Route.GET("/redirect4", func(c *gin.Context) {
+		c.JSON(200, gin.H{"hello": "world"})
+	})
 }
